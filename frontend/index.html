@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ReelMatch – Movie Recommendations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="logo" href="/" aria-label="ReelMatch home">ReelMatch</a>
+      <form id="search-form" class="search" role="search">
+        <span class="search-scope">All</span>
+        <input id="search-input" type="search" autocomplete="off"
+               placeholder="Describe a movie: “mind-bending sci-fi”, “Tom Hanks”, “like Inception”, “funny 90s movies”…">
+        <button type="submit" aria-label="Search">
+          <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        </button>
+      </form>
+      <a class="nav-link" href="#history-section">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+        <span>Watched <b id="history-count" class="badge">0</b></span>
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Find your next movie</h1>
+      <p>Type anything — a genre, a mood, a plot, an actor, a director, a decade, or “movies like …”.</p>
+      <div class="chips" id="example-chips"></div>
+    </section>
+
+    <section id="results-section" class="section hidden">
+      <div class="section-head">
+        <h2 class="section-title"><span id="results-title">Results</span></h2>
+        <label class="toggle"><input type="checkbox" id="hide-watched" checked> Hide movies I've watched</label>
+      </div>
+      <div id="interpreted" class="interpreted"></div>
+      <div id="results" class="grid"></div>
+    </section>
+
+    <section id="for-you-section" class="section">
+      <div class="section-head">
+        <h2 class="section-title">Recommended for you</h2>
+        <span class="muted" id="for-you-note"></span>
+      </div>
+      <div id="for-you" class="grid"></div>
+    </section>
+
+    <section id="history-section" class="section">
+      <div class="section-head">
+        <h2 class="section-title">Your watch history</h2>
+      </div>
+      <div class="add-watched">
+        <input id="add-input" type="text" autocomplete="off" placeholder="Add a movie you've watched…">
+        <ul id="add-suggestions" class="suggestions hidden"></ul>
+      </div>
+      <div id="history" class="shelf"></div>
+    </section>
+
+    <section id="top-section" class="section">
+      <div class="section-head"><h2 class="section-title">Top rated picks</h2></div>
+      <div id="top" class="shelf"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>ReelMatch · content-based recommendations from a curated catalog.
+      <span id="data-note"></span></p>
+  </footer>
+
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card">
+      <button class="modal-close" data-close aria-label="Close">×</button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="app.js"></script>
+</body>
+</html>
