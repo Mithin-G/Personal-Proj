@@ -45,6 +45,9 @@
   ];
 
   // ------------------------------------------------------------ rendering
+  const runtime = (m) => (m.runtime ? `${Math.floor(m.runtime / 60)}h ${m.runtime % 60}m` : "");
+  const metaLine = (m) => [m.year || "", runtime(m)].filter(Boolean).join(" · ");
+
   function hashHue(s) {
     let h = 0;
     for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0;
@@ -54,7 +57,7 @@
   function posterHTML(m) {
     const hue = hashHue(m.title);
     const fallback = `<div class="poster-fallback" style="background:linear-gradient(160deg,hsl(${hue} 45% 32%),hsl(${(hue + 40) % 360} 55% 12%))">
-        <div class="pf-title">${esc(m.title)}</div><div class="pf-year">${m.year}</div></div>`;
+        <div class="pf-title">${esc(m.title)}</div><div class="pf-year">${m.year || ""}</div></div>`;
     const img = m.poster
       ? `<img src="${esc(m.poster)}" alt="${esc(m.title)} poster" loading="lazy" onerror="this.remove()">`
       : "";
@@ -91,7 +94,7 @@
       </div>
       <div class="card-body">
         <div class="rating"><span class="star">★</span> ${m.rating.toFixed(1)}
-          <span class="card-meta">· ${m.year} · ${Math.floor(m.runtime / 60)}h ${m.runtime % 60}m</span></div>
+          <span class="card-meta">${metaLine(m) ? "· " + metaLine(m) : ""}</span></div>
         <div class="card-title" data-act="open" data-id="${m.id}">${esc(m.title)}</div>
         <div class="card-meta">${esc(m.genres.slice(0, 3).join(" · "))}</div>
         ${reasonList}
@@ -139,6 +142,7 @@
         ...i.genres.map((g) => `<span class="tag">Genre: <b>${esc(g)}</b></span>`),
         ...i.similar_to.map((t) => `<span class="tag">Like: <b>${esc(t)}</b></span>`),
         ...(i.years ? [`<span class="tag">Years: <b>${i.years[0]}–${i.years[1]}</b></span>`] : []),
+        ...(i.keywords || []).map((k) => `<span class="tag">Theme: <b>${esc(k)}</b></span>`),
       ];
       $("#interpreted").innerHTML = tags.join("");
       renderGrid($("#results"), data.results);
@@ -234,7 +238,7 @@
           <div class="poster">${posterHTML(m)}</div>
           <div>
             <h2>${esc(m.title)}</h2>
-            <div class="sub">${m.year} · ${Math.floor(m.runtime / 60)}h ${m.runtime % 60}m</div>
+            <div class="sub">${metaLine(m)}</div>
             <div class="big-rating"><span class="star">★</span> <b>${m.rating.toFixed(1)}</b><span class="muted">/10</span></div>
             <div class="genre-pills">${m.genres.map((g) => `<span>${esc(g)}</span>`).join("")}</div>
             <p class="synopsis">${esc(m.synopsis)}</p>
@@ -320,7 +324,7 @@
       if (!q) { sugg.classList.add("hidden"); return; }
       const hits = await api(`/api/movies?q=${encodeURIComponent(q)}`);
       sugg.innerHTML = hits.length
-        ? hits.map((h) => `<li data-add="${h.id}">${esc(h.title)} <span>(${h.year})</span></li>`).join("")
+        ? hits.map((h) => `<li data-add="${esc(h.id)}">${esc(h.title)} ${h.year ? `<span>(${h.year})</span>` : ""}</li>`).join("")
         : `<li class="muted">No match in the catalog</li>`;
       sugg.classList.remove("hidden");
     }, 150);
@@ -343,8 +347,9 @@
     try {
       const health = await api("/api/health");
       $("#data-note").textContent = health.live_data
-        ? "Posters and streaming availability: TMDB / JustWatch."
-        : "Set TMDB_API_KEY on the server for posters and live streaming availability.";
+        ? "Searching all movies on TMDB. Streaming availability by JustWatch."
+        : `Searching the bundled catalog of ${health.movies} movies. Set TMDB_API_KEY on the server to search every movie.`;
+      if (health.live_data) $("#top-title").textContent = "Trending this week";
       await refreshPersonal();
       await loadTop();
       const q = new URLSearchParams(location.search).get("q");

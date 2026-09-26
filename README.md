@@ -16,18 +16,33 @@ python backend/app.py
 # open http://localhost:5000
 ```
 
-### Optional: live posters and streaming availability
+### Search every movie with the TMDB API (recommended)
 
-Out of the box, "where to watch" comes from the curated catalog, which can go
-stale because streaming deals change. For posters and up-to-date availability,
-get a free [TMDB API key](https://www.themoviedb.org/settings/api) and run:
+By default the app searches a bundled catalog of about 250 movies. To search
+**all movies** on [The Movie Database (TMDB)](https://www.themoviedb.org) and
+get real posters and current streaming availability:
+
+1. Create a free TMDB account and request an API key at
+   <https://www.themoviedb.org/settings/api>. Choose "Developer" and
+   "personal use".
+2. Start the server with your key. The v3 "API Key" and the v4 "API Read
+   Access Token" both work:
 
 ```bash
 TMDB_API_KEY=your_key WATCH_REGION=US python backend/app.py
 ```
 
-This pulls per-region streaming, rent and buy providers (JustWatch data via
-TMDB) for every result.
+The footer confirms it with "Searching all movies on TMDB". `WATCH_REGION` is
+a two-letter country code for the streaming providers (US, GB, IN, CA, …). If
+TMDB is unreachable, the app falls back to the bundled catalog automatically.
+
+**How live search works:** the query is broken into TMDB lookups. Names go to
+person search, and plot or mood words go to keyword search. Genres and decades
+become `discover` filters, and "movies like X" pulls TMDB's recommendations
+for X. Up to 40 candidates are fetched with credits, keywords and watch
+providers, then ranked by the same content-based recommender. History
+recommendations combine TMDB's recommendations for each watched movie with
+your like/dislike profile. API responses are cached for 6 hours.
 
 ## Example queries
 
@@ -82,6 +97,9 @@ gets its own anonymous user ID, sent in the `X-User-Id` header.
 ```bash
 python -m unittest discover -s tests
 ```
+
+`tests/fake_tmdb.py` is an offline stand-in for the TMDB API, so the live
+engine is tested end to end without a key or network access.
 
 ## Extending the catalog
 

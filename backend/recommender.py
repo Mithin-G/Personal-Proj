@@ -143,6 +143,9 @@ class Movie:
     synopsis: str
     keywords: list[str]
     watch: list[str]
+    poster: str | None = None
+    where_to_watch: dict | None = None
+    vote_count: int | None = None   # set for live TMDB data; None = curated catalog
     vector: dict[str, float] = field(default_factory=dict, repr=False)
 
     @property
@@ -162,6 +165,8 @@ class Movie:
             "synopsis": self.synopsis,
             "keywords": self.keywords,
             "watch": self.watch,
+            "poster": self.poster,
+            "where_to_watch": self.where_to_watch,
         }
 
 
@@ -348,9 +353,20 @@ class Recommender:
     # --------------------------------------------------------------- ranking
     @staticmethod
     def _quality(movie: Movie) -> float:
-        return (movie.rating - 7.0) * 0.02
+        rating = movie.rating
+        if movie.vote_count is not None:
+            # Shrink ratings backed by few votes toward an average (Bayesian mean).
+            rating = (movie.vote_count * rating + 500 * 6.5) / (movie.vote_count + 500)
+        return (rating - 7.0) * 0.02
 
-    def search(self, query: str, limit: int = 12, exclude: set[str] | None = None) -> dict:
+    def search(self, query: str, limit: int = 12, exclude: set[str] | None = None,
+               prior: dict[str, float] | None = None) -> dict:
+        """Rank movies for a free-text query.
+
+        ``prior`` optionally adds a per-movie score bonus (used by the live TMDB
+        engine for movies an API lookup already tied to the query).
+        """
+        prior = prior or {}
         exclude = set(exclude or ())
         parsed = self.parse_query(query)
         exclude.update(m.id for m in parsed["titles"])
@@ -376,7 +392,7 @@ class Recommender:
         def score_all(vec):
             scored = []
             for m in candidates:
-                s = _cosine(vec, m.vector) if vec else 0.0
+                s = (_cosine(vec, m.vector) if vec else 0.0) + prior.get(m.id, 0.0)
                 # Hard boosts for explicit matches the user clearly asked for.
                 if any(p in m.cast or p in m.directors for p in parsed["people"]):
                     s += 0.25
@@ -406,7 +422,7 @@ class Recommender:
                 s = _cosine(cvec, m.vector) if cvec else 0.0
                 if yr and yr[0] <= m.year <= yr[1]:
                     s += 0.05
-                padding.append((s * 0.5, m))
+                padding.append((s * 0.5 + prior.get(m.id, 0.0), m))
             padding.sort(key=lambda x: -(x[0] + self._quality(x[1])))
             ranked += padding[: limit - len(ranked)]
 
@@ -436,7 +452,8 @@ class Recommender:
         )[:limit]
         return [dict(m.to_dict(), score=round(s, 4)) for s, m in scored]
 
-    def from_history(self, history: list[dict], limit: int = 12) -> list[dict]:
+    def from_history(self, history: list[dict], limit: int = 12,
+                     prior: dict[str, float] | None = None) -> list[dict]:
         """Recommend from watch history.
 
         ``history`` items: {"movie_id": str, "liked": bool | None}. Liked movies
@@ -462,7 +479,7 @@ class Recommender:
         for m in self.movies:
             if m.id in seen:
                 continue
-            s = _cosine(pvec, m.vector)
+            s = _cosine(pvec, m.vector) + (prior or {}).get(m.id, 0.0)
             # Penalise closeness to disliked movies.
             for h in entries:
                 if h.get("liked") is False:
