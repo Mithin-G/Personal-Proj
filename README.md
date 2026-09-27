@@ -25,12 +25,16 @@ get real posters and current streaming availability:
 1. Create a free TMDB account and request an API key at
    <https://www.themoviedb.org/settings/api>. Choose "Developer" and
    "personal use".
-2. Start the server with your key. The v3 "API Key" and the v4 "API Read
-   Access Token" both work:
+2. Copy `.env.example` to `.env` and paste in your key. The v3 "API Key" and
+   the v4 "API Read Access Token" both work. `.env` is git-ignored, so the key
+   stays out of the repo.
 
 ```bash
-TMDB_API_KEY=your_key WATCH_REGION=US python backend/app.py
+cp .env.example .env      # then edit .env: TMDB_API_KEY=...
+python backend/app.py
 ```
+
+You can also pass it inline: `TMDB_API_KEY=your_key python backend/app.py`.
 
 The footer confirms it with "Searching all movies on TMDB". `WATCH_REGION` is
 a two-letter country code for the streaming providers (US, GB, IN, CA, …). If

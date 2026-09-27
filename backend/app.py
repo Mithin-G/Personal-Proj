@@ -18,6 +18,21 @@ from recommender import Recommender
 from tmdb import TMDB, TMDBError
 
 ROOT = Path(__file__).resolve().parent.parent
+
+
+def load_dotenv(path: Path = ROOT / ".env") -> None:
+    """Load KEY=value lines from .env (git-ignored) without overriding real env vars."""
+    if not path.exists():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
+load_dotenv()
 FRONTEND = ROOT / "frontend"
 DB_PATH = Path(os.environ.get("REELMATCH_DB", ROOT / "backend" / "data" / "reelmatch.db"))
 
